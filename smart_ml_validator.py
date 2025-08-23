@@ -110,7 +110,7 @@ class SmartValidator:
 
         query = f"""
         SELECT *
-        FROM fas.ml_training_data_direct
+        FROM fas.mv_ml_training_data_simplified
         WHERE market_regime = '{market_regime}'
             AND signal_type = '{signal_type}'
             AND target IS NOT NULL
@@ -330,7 +330,7 @@ class SmartValidator:
                 *,
                 LAG(market_regime) OVER (ORDER BY timestamp) as prev_regime,
                 LEAD(market_regime) OVER (ORDER BY timestamp) as next_regime
-            FROM fas.ml_training_data_direct
+            FROM fas.mv_ml_training_data_simplified
             WHERE signal_type = '{signal_type}'
                 AND target IS NOT NULL
                 AND timestamp >= NOW() - INTERVAL '14 days'
@@ -560,7 +560,7 @@ class SmartValidator:
         # Load data for both regimes
         query = f"""
         SELECT *
-        FROM fas.ml_training_data_direct
+        FROM fas.mv_ml_training_data_simplified
         WHERE signal_type = '{signal_type_a}'
             AND target IS NOT NULL
             AND timestamp >= NOW() - INTERVAL '{days} days'

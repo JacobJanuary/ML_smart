@@ -151,7 +151,7 @@ def check_database_records():
                 COUNT(*) as count,
                 MIN(timestamp) as earliest,
                 MAX(timestamp) as latest
-            FROM fas.ml_training_data_direct
+            FROM fas.mv_ml_training_data_simplified
             WHERE timestamp >= NOW() - INTERVAL '7 days'
                 AND timestamp < NOW() - INTERVAL '48 hours'
                 AND target IS NOT NULL

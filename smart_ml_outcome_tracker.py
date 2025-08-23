@@ -3,7 +3,7 @@
 Smart ML Outcome Tracker
 =========================
 Отслеживает результаты предсказаний и обновляет smart_ml.prediction_outcomes.
-Использует данные из fas.ml_training_data_direct для определения outcomes.
+Использует данные из fas.mv_ml_training_data_simplified для определения outcomes.
 """
 
 import pandas as pd
@@ -105,7 +105,7 @@ class OutcomeTracker:
     def update_outcomes(self):
         """Update outcomes for pending predictions."""
         query = """
-        -- Обновить outcomes используя данные из fas.ml_training_data_direct
+        -- Обновить outcomes используя данные из fas.mv_ml_training_data_simplified
         WITH outcomes_to_update AS (
             SELECT 
                 po.id,
@@ -125,7 +125,7 @@ class OutcomeTracker:
                 END as outcome_type
             FROM smart_ml.prediction_outcomes po
             INNER JOIN fas.scoring_history sh ON po.signal_id = sh.id
-            INNER JOIN fas.ml_training_data_direct td 
+            INNER JOIN fas.mv_ml_training_data_simplified td 
                 ON sh.trading_pair_id = td.trading_pair_id
                 AND sh.timestamp = td.timestamp
             WHERE po.outcome_type = 'PENDING'

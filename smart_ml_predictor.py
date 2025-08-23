@@ -394,7 +394,9 @@ class SmartPredictor:
 
         # Create prediction records
         predictions = []
+        processed_ids = []
         for idx, signal in enumerate(df.itertuples(index=False)):
+            processed_ids.append(int(signal.id))
             if y_pred[idx]:  # Only keep positive predictions
                 features_hash = hashlib.md5(
                     json.dumps(X_scaled.iloc[idx].to_dict(), sort_keys=True).encode()
@@ -415,11 +417,12 @@ class SmartPredictor:
                     'features_hash': features_hash
                 })
 
-        return predictions
+        return predictions, processed_ids
 
     def make_predictions(self, df: pd.DataFrame, market_regime: str) -> List[Dict]:
         """Make predictions for all signals using appropriate models."""
         all_predictions = []
+        all_processed_ids = []
 
         # Group signals by type
         for signal_type in ['BUY', 'SELL']:
@@ -435,7 +438,8 @@ class SmartPredictor:
 
             # Try specialized model first
             if model_name in self.models:
-                predictions = self.predict_with_model(type_signals, model_name)
+                predictions, processed_ids = self.predict_with_model(type_signals, model_name)
+                all_processed_ids.extend(processed_ids)
 
                 if predictions:
                     all_predictions.extend(predictions)
@@ -446,18 +450,19 @@ class SmartPredictor:
             # Fallback to general model if specialized fails
             elif self.fallback_models[signal_type]:
                 logger.warning(f"   ⚠️ Using fallback model for {signal_type}")
-                predictions = self._predict_with_fallback(type_signals, signal_type)
+                predictions, processed_ids = self._predict_with_fallback(type_signals, signal_type)
+                all_processed_ids.extend(processed_ids)
                 all_predictions.extend(predictions)
             else:
                 logger.error(f"   ❌ No model available for {model_name}")
 
-        return all_predictions
+        return all_predictions, all_processed_ids
 
     def _predict_with_fallback(self, df: pd.DataFrame, signal_type: str) -> List[Dict]:
         """Use fallback model for predictions."""
         fallback = self.fallback_models[signal_type]
         if not fallback:
-            return []
+            return [], []
 
         # Simplified feature preparation for fallback
         X = df[fallback['feature_columns']].fillna(0)
@@ -467,7 +472,9 @@ class SmartPredictor:
         y_pred = (y_pred_proba >= fallback['threshold']).astype(bool)
 
         predictions = []
+        processed_ids = []
         for idx, signal in enumerate(df.itertuples(index=False)):
+            processed_ids.append(int(signal.id))  # Track ALL processed signals
             if y_pred[idx]:
                 predictions.append({
                     'signal_id': int(signal.id),
@@ -484,7 +491,7 @@ class SmartPredictor:
                     'features_hash': ''
                 })
 
-        return predictions
+        return predictions, processed_ids
 
     def save_predictions(self, predictions: List[Dict], market_regime: str):
         """Save predictions to database."""
@@ -603,7 +610,7 @@ class SmartPredictor:
             return []
 
         # 3. Make predictions
-        predictions = self.make_predictions(active_signals, market_regime)
+        predictions, all_processed_ids = self.make_predictions(active_signals, market_regime)
 
         # 4. Show summary
         self.get_prediction_summary(predictions, market_regime)
@@ -612,8 +619,9 @@ class SmartPredictor:
         if predictions:
             saved_signal_ids = self.save_predictions(predictions, market_regime)
 
-            # 6. Mark signals as processed
-            self.mark_signals_processed(saved_signal_ids)
+            # 6. Mark ALL processed signals (not just saved ones)
+        if all_processed_ids:
+            self.mark_signals_processed(all_processed_ids)
 
             # 7. Export for review
             #df_pred = pd.DataFrame(predictions)
@@ -638,7 +646,7 @@ def main():
         if high_confidence:
             logger.info(f"\n🎯 {len(high_confidence)} HIGH CONFIDENCE SIGNALS:")
             for signal in sorted(high_confidence, key=lambda x: x['prediction_proba'], reverse=True)[:5]:
-                logger.info(f"  {signal['signal_type']} {signal.pair_symbol}: "
+                logger.info(f"  {signal['signal_type']} {signal['pair_symbol']}: "
                             f"prob={signal['prediction_proba']:.3f} "
                             f"[{signal['model_name']}]")
 

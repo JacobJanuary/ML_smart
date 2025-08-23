@@ -38,7 +38,7 @@ class SmartMLTrainer:
     # Конфигурация для каждой модели
     MODEL_CONFIGS = {
         'BULL_BUY': {
-            'window_days': 7,
+            'window_days': 14,
             'min_samples': 3000,
             'target_signals_pct': 0.15,  # 15% сигналов
             'target_win_rate': 0.78,
@@ -54,7 +54,7 @@ class SmartMLTrainer:
             'ensemble': True  # Критичная модель - используем ensemble
         },
         'NEUTRAL_BUY': {
-            'window_days': 10,
+            'window_days': 14,
             'min_samples': 3000,
             'target_signals_pct': 0.02,
             'target_win_rate': 0.65,
@@ -62,7 +62,7 @@ class SmartMLTrainer:
             'ensemble': True
         },
         'NEUTRAL_SELL': {
-            'window_days': 10,
+            'window_days': 14,
             'min_samples': 3000,
             'target_signals_pct': 0.02,
             'target_win_rate': 0.80,
@@ -70,7 +70,7 @@ class SmartMLTrainer:
             'ensemble': True
         },
         'BEAR_BUY': {
-            'window_days': 10,
+            'window_days': 14,
             'min_samples': 2000,
             'target_signals_pct': 0.02,
             'target_win_rate': 0.65,
@@ -78,7 +78,7 @@ class SmartMLTrainer:
             'ensemble': True
         },
         'BEAR_SELL': {
-            'window_days': 7,
+            'window_days': 14,
             'min_samples': 3000,
             'target_signals_pct': 0.12,  # 10-15% сигналов
             'target_win_rate': 0.70,
@@ -199,7 +199,7 @@ class SmartMLTrainer:
         query = f"""
         WITH regime_data AS (
             SELECT *
-            FROM fas.ml_training_data_direct
+            FROM fas.mv_ml_training_data_simplified
             WHERE market_regime = '{market_regime}'
                 AND signal_type = '{signal_type}'
                 AND target IS NOT NULL

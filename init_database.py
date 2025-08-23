@@ -316,15 +316,15 @@ def create_database_schema():
                 SELECT 1 
                 FROM pg_matviews 
                 WHERE schemaname = 'fas' 
-                AND matviewname = 'ml_training_data_direct'
+                AND matviewname = 'mv_ml_training_data_simplified'
             );
         """)
 
         mv_exists = cur.fetchone()[0]
         if mv_exists:
-            print_status("fas.ml_training_data_direct (materialized view) exists")
+            print_status("fas.mv_ml_training_data_simplified (materialized view) exists")
         else:
-            print_warning("fas.ml_training_data_direct (materialized view) not found")
+            print_warning("fas.mv_ml_training_data_simplified (materialized view) not found")
 
         # Check regular tables
         required_tables = [
@@ -353,7 +353,7 @@ def create_database_schema():
                 missing_items.append(f"{schema}.{table}")
 
         if not mv_exists:
-            missing_items.append("fas.ml_training_data_direct (materialized view)")
+            missing_items.append("fas.mv_ml_training_data_simplified (materialized view)")
 
         if missing_items:
             print_warning("\nSome source tables/views are missing:")
